@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FIM - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="center-body">
+    <div class="login-card">
+        <h2>File Integrity Monitor</h2>
+        <p class="subtitle">Ransomware Protection System</p>
+        
+        {% if error %}
+            <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            <label>Username</label>
+            <input type="text" name="username" required>
+            
+            <label>Password</label>
+            <input type="password" name="password" required>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <p class="hint">Default credentials: <strong>admin</strong> / <strong>password123</strong></p>
+    </div>
+</body>
+</html>

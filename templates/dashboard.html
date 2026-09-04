@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FIM - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta http-equiv="refresh" content="5"> <!-- Auto-refresh to show real-time alerts -->
+</head>
+<body>
+    <header class="navbar">
+        <h2>🛡️ Anti-Ransomware FIM Dashboard</h2>
+        <div class="user-info">
+            <span>Welcome, {{ user }}</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="status-box">
+            <h3>System Status: <span class="active">Monitoring Active</span></h3>
+            <p>Watching folder: <code>./monitored_folder</code>. Any rapid unauthorized modifications, encryptions, or file deletions will be captured below in real-time.</p>
+        </div>
+
+        <h3>Security Audit Log & Alerts</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>File Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if alerts %}
+                    {% for alert in alerts %}
+                    <tr>
+                        <td>{{ alert.id }}</td>
+                        <td>{{ alert.timestamp }}</td>
+                        <td><span class="badge {{ alert.event_type | lower }}">{{ alert.event_type }}</span></td>
+                        <td>{{ alert.file_path }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="no-data">No suspicious file events detected yet. Try modifying a file inside <code>monitored_folder</code>.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
