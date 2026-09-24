@@ -32,6 +32,7 @@ def init_db():
                 timestamp TEXT NOT NULL,
                 event_type TEXT NOT NULL,
                 file_path TEXT NOT NULL
+                risk_level TEXT NOT NULL
             )
         """)
         # Insert a default admin user (username: admin, password: password123)

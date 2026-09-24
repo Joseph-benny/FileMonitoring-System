@@ -3,6 +3,53 @@ from datetime import datetime
 import sqlite3
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from datetime import datetime, timedelta
+
+def classify_risk(event_type, file_path, recent_events_count):
+    """
+    Classifies file events into Low, Medium, or High risk 
+    using conditions and simple pattern analysis.
+    """
+    # High Risk Pattern: Rapid burst of modifications (simulating ransomware mass encryption)
+    if recent_events_count >= 5 and event_type in ["MODIFIED", "RENAMED"]:
+        return "HIGH"
+    
+    # Medium Risk Pattern: Deletions or sensitive file extensions
+    elif event_type == "DELETED":
+        return "MEDIUM"
+    elif file_path.endswith((".exe", ".bat", ".sh", ".env")):
+        return "MEDIUM"
+        
+    # Low Risk Pattern: Standard creation or single edits
+    else:
+        return "LOW"
+
+    
+
+def analyze_recent_activity(db_path):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # Fetch the last 10 events to check for patterns
+    cursor.execute("SELECT * FROM alerts ORDER BY id DESC LIMIT 10")
+    events = cursor.fetchall()
+    conn.close()
+    
+    # Loop through events to check frequency patterns
+    modification_count = 0
+    for event in events:
+        if event["event_type"] == "MODIFIED":
+            modification_count += 1
+            
+    # Pattern check: If more than 3 recent modifications exist, flag unusual behavior
+    pattern_detected = modification_count >= 3
+    
+    return {
+        "modification_count": modification_count,
+        "pattern_detected": pattern_detected,
+        "total_analyzed": len(events)
+    }
 
 class RansomwareDetectionHandler(FileSystemEventHandler):
     def __init__(self, db_path):
@@ -19,8 +66,8 @@ class RansomwareDetectionHandler(FileSystemEventHandler):
         try:
             conn = sqlite3.connect(self.db_path)
             conn.execute(
-                "INSERT INTO alerts (timestamp, event_type, file_path) VALUES (?, ?, ?)",
-                (timestamp, event_type, file_path)
+                "INSERT INTO alerts (timestamp, event_type, file_path, risk_level) VALUES (?, ?, ?, ?)",
+                (timestamp, event_type, file_path,risk_level)
             )
             conn.commit()
             conn.close()
