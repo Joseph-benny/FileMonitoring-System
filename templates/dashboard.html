@@ -88,6 +88,75 @@
                         <td colspan="5" class="no-data">No suspicious file events detected yet. Try modifying a file inside <code>monitored_folder</code>.</td>
                     </tr>
                 {% endif %}
+
+<!-- Phase 3: Analytics Summary Cards -->
+<div class="row mb-4" style="display: flex; gap: 20px; margin-bottom: 20px;">
+    
+    <!-- Total Alerts Card -->
+    <div class="card" style="padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; flex: 1;">
+        <h4>Total Alerts</h4>
+        <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">{{ stats.total_alerts }}</p>
+    </div>
+
+    <!-- High Risk Count Card -->
+    <div class="card" style="padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; flex: 1;">
+        <h4>High Risk</h4>
+        <p style="font-size: 24px; font-weight: bold; color: red; margin: 5px 0;">
+            {{ stats.risk_breakdown.get('HIGH', 0) }}
+        </p>
+    </div>
+
+    <!-- Medium Risk Count Card -->
+    <div class="card" style="padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; flex: 1;">
+        <h4>Medium Risk</h4>
+        <p style="font-size: 24px; font-weight: bold; color: orange; margin: 5px 0;">
+            {{ stats.risk_breakdown.get('MEDIUM', 0) }}
+        </p>
+    </div>
+
+    <!-- Low Risk Count Card -->
+    <div class="card" style="padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9; flex: 1;">
+        <h4>Low Risk</h4>
+        <p style="font-size: 24px; font-weight: bold; color: green; margin: 5px 0;">
+            {{ stats.risk_breakdown.get('LOW', 0) }}
+        </p>
+    </div>
+
+</div>
+
+<!-- Filter Navigation Bar -->
+<div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+    <span style="font-weight: bold; margin-right: 5px; color: #444;">Filter By Risk:</span>
+    
+    <a href="{{ url_for('dashboard', risk='ALL') }}" 
+       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
+       background: {{ '#007bff' if current_filter == 'ALL' else '#e2e8f0' }}; 
+       color: {{ 'white' if current_filter == 'ALL' else '#333' }};">
+       All
+    </a>
+    
+    <a href="{{ url_for('dashboard', risk='HIGH') }}" 
+       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
+       background: {{ '#e53e3e' if current_filter == 'HIGH' else '#fed7d7' }}; 
+       color: {{ 'white' if current_filter == 'HIGH' else '#9b2c2c' }};">
+       High
+    </a>
+    
+    <a href="{{ url_for('dashboard', risk='MEDIUM') }}" 
+       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
+       background: {{ '#dd6b20' if current_filter == 'MEDIUM' else '#feebc8' }}; 
+       color: {{ 'white' if current_filter == 'MEDIUM' else '#7b341e' }};">
+       Medium
+    </a>
+    
+    <a href="{{ url_for('dashboard', risk='LOW') }}" 
+       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
+       background: {{ '#38a169' if current_filter == 'LOW' else '#c6f6d5' }}; 
+       color: {{ 'white' if current_filter == 'LOW' else '#22543d' }};">
+       Low
+    </a>
+</div>
+
             </tbody>
         </table>
     </div>
