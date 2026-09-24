@@ -1,0 +1,32 @@
+import os
+import time
+
+# Point this to your monitored directory
+MONITORED_FOLDER = "monitored_folder"
+
+def simulate_suspicious_activity():
+    print("[*] Starting safe ransomware behavior simulation for FIM testing...")
+    
+    # Ensure the monitored directory exists
+    os.makedirs(MONITORED_FOLDER, exist_ok=True)
+    
+    target_file = os.path.join(MONITORED_FOLDER, "confidential_data.txt")
+    
+    # Step 1: Create a normal file (Should log as LOW risk)
+    print("[*] Creating test file...")
+    with open(target_file, "w") as f:
+        f.write("User sensitive records - phase 2 test.")
+    time.sleep(1)
+    
+    # Step 2: Simulate rapid burst of modifications (Should trigger HIGH risk)
+    print("[*] Simulating rapid file modifications (mass edit)...")
+    for i in range(6):
+        with open(target_file, "a") as f:
+            f.write(f"\nEncrypted/Altered payload chunk {i+1}")
+        print(f" -> Modification burst count: {i+1}")
+        time.sleep(0.3) # Fast modifications to simulate automated script behavior
+        
+    print("[*] Simulation finished! Check your Flask dashboard to see the HIGH risk alerts.")
+
+if __name__ == "__main__":
+    simulate_suspicious_activity()

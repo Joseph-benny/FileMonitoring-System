@@ -61,13 +61,21 @@ class RansomwareDetectionHandler(FileSystemEventHandler):
             return
             
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[{timestamp}] ALERT: {event_type} -> {file_path}")
+        
+        # 1. Analyze recent activity to get the modification count
+        analysis = analyze_recent_activity(self.db_path)
+        recent_count = analysis["modification_count"]
+        
+        # 2. Classify the risk level using your function
+        risk_level = classify_risk(event_type, file_path, recent_count)
+        
+        print(f"[{timestamp}] ALERT [{risk_level}]: {event_type} -> {file_path}")
         
         try:
             conn = sqlite3.connect(self.db_path)
             conn.execute(
                 "INSERT INTO alerts (timestamp, event_type, file_path, risk_level) VALUES (?, ?, ?, ?)",
-                (timestamp, event_type, file_path,risk_level)
+                (timestamp, event_type, file_path, risk_level)
             )
             conn.commit()
             conn.close()
