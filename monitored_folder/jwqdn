@@ -1,6 +1,8 @@
 import os
 import time
 
+
+#sample suspicious code
 # Point this to your monitored directory
 MONITORED_FOLDER = "monitored_folder"
 

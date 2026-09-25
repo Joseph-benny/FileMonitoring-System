@@ -43,6 +43,16 @@
         .badge.risk-high { background: #fee2e2; color: #991b1b; }
 
         .no-data { text-align: center; color: #94a3b8; }
+
+        .filter-btn { padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500; }
+        .filter-all { background: #e2e8f0; color: #333; }
+        .filter-all.active { background: #007bff; color: white; }
+        .filter-high { background: #fed7d7; color: #9b2c2c; }
+        .filter-high.active { background: #e53e3e; color: white; }
+        .filter-medium { background: #feebc8; color: #7b341e; }
+        .filter-medium.active { background: #dd6b20; color: white; }
+        .filter-low { background: #c6f6d5; color: #22543d; }
+        .filter-low.active { background: #38a169; color: white; }
     </style>
     <meta http-equiv="refresh" content="5">
 </head>
@@ -128,33 +138,44 @@
 <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
     <span style="font-weight: bold; margin-right: 5px; color: #444;">Filter By Risk:</span>
     
-    <a href="{{ url_for('dashboard', risk='ALL') }}" 
-       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
-       background: {{ '#007bff' if current_filter == 'ALL' else '#e2e8f0' }}; 
-       color: {{ 'white' if current_filter == 'ALL' else '#333' }};">
+    <a href="{{ url_for('dashboard', risk='ALL') }}" class="filter-btn filter-all{% if current_filter == 'ALL' %} active{% endif %}">
        All
     </a>
     
-    <a href="{{ url_for('dashboard', risk='HIGH') }}" 
-       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
-       background: {{ '#e53e3e' if current_filter == 'HIGH' else '#fed7d7' }}; 
-       color: {{ 'white' if current_filter == 'HIGH' else '#9b2c2c' }};">
+    <a href="{{ url_for('dashboard', risk='HIGH') }}" class="filter-btn filter-high{% if current_filter == 'HIGH' %} active{% endif %}">
        High
     </a>
     
-    <a href="{{ url_for('dashboard', risk='MEDIUM') }}" 
-       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
-       background: {{ '#dd6b20' if current_filter == 'MEDIUM' else '#feebc8' }}; 
-       color: {{ 'white' if current_filter == 'MEDIUM' else '#7b341e' }};">
+    <a href="{{ url_for('dashboard', risk='MEDIUM') }}" class="filter-btn filter-medium{% if current_filter == 'MEDIUM' %} active{% endif %}">
        Medium
     </a>
     
-    <a href="{{ url_for('dashboard', risk='LOW') }}" 
-       style="padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500;
-       background: {{ '#38a169' if current_filter == 'LOW' else '#c6f6d5' }}; 
-       color: {{ 'white' if current_filter == 'LOW' else '#22543d' }};">
+    <a href="{{ url_for('dashboard', risk='LOW') }}" class="filter-btn filter-low{% if current_filter == 'LOW' %} active{% endif %}">
        Low
     </a>
+</div>
+<!-- Frequency Spike Warning Banner -->
+{% if frequency.is_activity_spike %}
+<div style="background: #fff5f5; border: 1px solid #feb2b2; color: #9b2c2c; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; justify-content: space-between;">
+    <span>⚠️ SECURITY WARNING: High frequency activity spike detected! {{ frequency.recent_count }} events recorded in the last {{ frequency.time_window }} minutes. Potential ransomware behavior in progress!</span>
+</div>
+{% endif %}
+<!-- Trend Summary Section -->
+<div style="background: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 25px;">
+    <h3 style="margin-top: 0; font-size: 16px; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 10px;">📈 Activity Trends (Last 7 Days)</h3>
+    
+    {% if trends %}
+        <div style="display: flex; gap: 15px; margin-top: 15px; overflow-x: auto;">
+            {% for trend in trends %}
+            <div style="background: #f7fafc; border: 1px solid #e2e8f0; padding: 12px 18px; border-radius: 6px; text-align: center; min-width: 120px;">
+                <span style="display: block; font-size: 12px; color: #718096; margin-bottom: 4px;">{{ trend.alert_date }}</span>
+                <span style="font-size: 20px; font-weight: bold; color: #2b6cb0;">{{ trend.count }} events</span>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: #718096; font-style: italic; margin: 10px 0 0 0;">No historical trend data available yet.</p>
+    {% endif %}
 </div>
 
             </tbody>

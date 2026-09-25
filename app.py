@@ -3,7 +3,29 @@ import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from monitoring.watcher import start_monitoring
+from datetime import datetime, timedelta
+from flask import jsonify
 
+def check_event_frequency(db_path, minutes=5, threshold_limit=10):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Calculate the timestamp threshold (e.g., 5 minutes ago)
+    threshold_time = (datetime.now() - timedelta(minutes=minutes)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Count how many events happened since that threshold
+    cursor.execute("SELECT COUNT(*) FROM alerts WHERE timestamp >= ?", (threshold_time,))
+    recent_count = cursor.fetchone()[0]
+    conn.close()
+    
+    # Flag if activity exceeds the limit within the time window
+    is_spike = recent_count >= threshold_limit
+    
+    return {
+        "recent_count": recent_count,
+        "time_window": minutes,
+        "is_activity_spike": is_spike
+    }
 app = Flask(__name__)
 app.secret_key = "super_secret_key_change_in_production"
 
@@ -90,33 +112,81 @@ def login():
             
     return render_template("login.html", error=error)
 
+def get_alert_trends(db_path):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # Group alerts by date to track daily activity trends (last 7 days)
+    cursor.execute("""
+        SELECT DATE(timestamp) as alert_date, COUNT(*) as count 
+        FROM alerts 
+        GROUP BY DATE(timestamp) 
+        ORDER BY alert_date DESC 
+        LIMIT 7
+    """)
+    trends = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return trends
+
+def print_console_table(db_path, limit=10):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # Fetch recent alerts
+    cursor.execute("SELECT * FROM alerts ORDER BY id DESC LIMIT ?", (limit,))
+    alerts = cursor.fetchall()
+    conn.close()
+    
+    if not alerts:
+        print("\n[+] No security alerts found in the database.\n")
+        return
+
+    # Print table header
+    print("\n" + "="*85)
+    print(f"{'ID':<5} | {'TIMESTAMP':<20} | {'RISK':<8} | {'EVENT':<10} | {'FILE PATH'}")
+    print("="*85)
+    
+    # Print each row formatted as a table
+    for alert in alerts:
+        alert_id = str(alert["id"])
+        timestamp = str(alert["timestamp"])
+        risk = str(alert["risk_level"])
+        event = str(alert["event_type"])
+        path = str(alert["file_path"])
+        
+        print(f"{alert_id:<5} | {timestamp:<20} | {risk:<8} | {event:<10} | {path}")
+    
+    print("="*85 + "\n")
+
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
     
-    # Get the risk filter from the URL (default to 'ALL' if none selected)
     selected_risk = request.args.get("risk", "ALL")
     
     conn = get_db()
-    
-    # Conditional SQL query based on the selected filter
     if selected_risk and selected_risk != "ALL":
         query = "SELECT * FROM alerts WHERE risk_level = ? ORDER BY id DESC LIMIT 50"
         alerts = conn.execute(query, (selected_risk,)).fetchall()
     else:
         query = "SELECT * FROM alerts ORDER BY id DESC LIMIT 50"
         alerts = conn.execute(query).fetchall()
-        
     conn.close()
     
-    # Fetch statistics for Phase 3 counting
+    # Gather stats, frequency, and new trend data
     stats = get_alert_statistics(DATABASE)
+    frequency = check_event_frequency(DATABASE, minutes=5, threshold_limit=10)
+    trends = get_alert_trends(DATABASE)  # <--- New trend summary data
     
     return render_template(
         "dashboard.html", 
         alerts=alerts, 
         stats=stats, 
+        frequency=frequency, 
+        trends=trends,       # <--- Pass to template
         current_filter=selected_risk, 
         user=session["user"]
     )
@@ -137,3 +207,28 @@ if __name__ == "__main__":
     start_monitoring(target_dir, DATABASE)
     
     app.run(debug=True, port=5000)
+
+@app.route("/api/metrics")
+def api_metrics():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    # Gather processed data from your functions
+    stats = get_alert_statistics(DATABASE)
+    frequency = check_event_frequency(DATABASE, minutes=5, threshold_limit=10)
+    
+    # Return as a structured JSON object
+    return jsonify({
+        "status": "success",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "analytics": {
+            "total_alerts": stats["total_alerts"],
+            "risk_breakdown": stats["risk_breakdown"],
+            "event_breakdown": stats["type_breakdown"]
+        },
+        "security_status": {
+            "is_activity_spike": frequency["is_activity_spike"],
+            "recent_events_count": frequency["recent_count"],
+            "time_window_minutes": frequency["time_window"]
+        }
+    })
